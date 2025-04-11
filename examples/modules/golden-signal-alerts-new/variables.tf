@@ -10,6 +10,19 @@ variable "service" {
   })
 }
 
+variable "custom_nrql_conditions" {
+  description = "List of custom NRQL alert conditions"
+  type = list(object({
+    name        = string
+    description = optional(string)
+    query       = string
+    threshold   = number
+    operator    = string
+    duration    = number
+    priority    = optional(string)
+  }))
+  default = []
+}
 variable "notification_channel_ids" {
   description = "The IDs of notification channels to add to this policy"
   type        = list(string)

@@ -8,6 +8,28 @@ resource "newrelic_alert_policy" "golden_signal_policy" {
   name = "Golden Signals - ${var.service.name}"
 }
 
+resource "newrelic_nrql_alert_condition" "custom_conditions" {
+  for_each = { for idx, cond in var.custom_nrql_conditions : idx => cond }
+
+  policy_id = newrelic_alert_policy.golden_signal_policy.id
+  name      = each.value.name
+  enabled   = true
+
+  nrql {
+    query = each.value.query
+  }
+
+  critical {
+    threshold             = each.value.threshold
+    operator              = each.value.operator
+    threshold_duration    = each.value.duration
+    threshold_occurrences = "all"
+  }
+
+  type                         = "static"
+  violation_time_limit_seconds = 259200
+}
+
 resource "newrelic_nrql_alert_condition" "response_time_web" {
   policy_id   = newrelic_alert_policy.golden_signal_policy.id
   name        = "High Response Time (web)"

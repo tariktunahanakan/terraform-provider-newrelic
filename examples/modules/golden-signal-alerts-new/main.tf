@@ -1,5 +1,3 @@
-
-
 resource "newrelic_alert_policy" "golden_signal_policy" {
   name = "Golden Signals - ${var.service.name}"
 }
@@ -33,10 +31,11 @@ resource "newrelic_nrql_alert_condition" "response_time_web" {
   fill_value  = 0
 
   nrql {
+    # Değiştirildi: label.team yerine "appName = ..."
     query = <<-EOT
       SELECT filter(average(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
       FROM Metric
-      WHERE label.team = '${var.service.team}'
+      WHERE appName = '${var.service.name}'
       AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
       FACET appName
     EOT
@@ -60,7 +59,7 @@ resource "newrelic_nrql_alert_condition" "throughput_web" {
     query = <<-EOT
       SELECT filter(count(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
       FROM Metric
-      WHERE label.team = '${var.service.team}'
+      WHERE appName = '${var.service.name}'
       AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
       FACET appName
     EOT
@@ -85,7 +84,7 @@ resource "newrelic_nrql_alert_condition" "error_percentage" {
       SELECT ((filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all')
             / filter(count(newrelic.timeslice.value), WHERE metricTimesliceName IN ('HttpDispatcher', 'OtherTransaction/all'))) OR 0) * 100
       FROM Metric
-      WHERE label.team = '${var.service.team}'
+      WHERE appName = '${var.service.name}'
       AND metricTimesliceName IN ('Errors/all', 'HttpDispatcher', 'OtherTransaction/all', 'Agent/MetricsReported/count')
       FACET appName
     EOT
@@ -109,7 +108,7 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
     query = <<-EOT
       SELECT average(cpuPercent)
       FROM SystemSample
-      WHERE label.team = '${var.service.team}'
+      WHERE appName = '${var.service.name}'
       FACET entityId
     EOT
   }

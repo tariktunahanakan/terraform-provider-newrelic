@@ -1,8 +1,4 @@
-data "newrelic_entity" "application" {
-  name   = var.service.name
-  type   = "APPLICATION"
-  domain = "APM"
-}
+
 
 resource "newrelic_alert_policy" "golden_signal_policy" {
   name = "Golden Signals - ${var.service.name}"
@@ -37,7 +33,13 @@ resource "newrelic_nrql_alert_condition" "response_time_web" {
   fill_value  = 0
 
   nrql {
-    query = "SELECT filter(average(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0 FROM Metric WHERE appId IN (${data.newrelic_entity.application.application_id}) AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count') FACET appId"
+    query = <<-EOT
+      SELECT filter(average(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
+      FROM Metric
+      WHERE label.team = '${var.service.team}'
+      AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
+      FACET appName
+    EOT
   }
 
   critical {
@@ -55,7 +57,13 @@ resource "newrelic_nrql_alert_condition" "throughput_web" {
   fill_value  = 0
 
   nrql {
-    query = "SELECT filter(count(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0 FROM Metric WHERE appId IN (${data.newrelic_entity.application.application_id}) AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count') FACET appId"
+    query = <<-EOT
+      SELECT filter(count(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
+      FROM Metric
+      WHERE label.team = '${var.service.team}'
+      AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
+      FACET appName
+    EOT
   }
 
   critical {
@@ -73,7 +81,14 @@ resource "newrelic_nrql_alert_condition" "error_percentage" {
   fill_value  = 0
 
   nrql {
-    query = "SELECT ((filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all') / filter(count(newrelic.timeslice.value), WHERE metricTimesliceName IN ('HttpDispatcher', 'OtherTransaction/all'))) OR 0) * 100 FROM Metric WHERE appId IN (${data.newrelic_entity.application.application_id}) AND metricTimesliceName IN ('Errors/all', 'HttpDispatcher', 'OtherTransaction/all', 'Agent/MetricsReported/count') FACET appId"
+    query = <<-EOT
+      SELECT ((filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all')
+            / filter(count(newrelic.timeslice.value), WHERE metricTimesliceName IN ('HttpDispatcher', 'OtherTransaction/all'))) OR 0) * 100
+      FROM Metric
+      WHERE label.team = '${var.service.team}'
+      AND metricTimesliceName IN ('Errors/all', 'HttpDispatcher', 'OtherTransaction/all', 'Agent/MetricsReported/count')
+      FACET appName
+    EOT
   }
 
   critical {
@@ -91,7 +106,12 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
   fill_value  = 0
 
   nrql {
-    query = "SELECT average(cpuPercent) FROM SystemSample WHERE (`applicationId` = '${data.newrelic_entity.application.application_id}') FACET entityId"
+    query = <<-EOT
+      SELECT average(cpuPercent)
+      FROM SystemSample
+      WHERE label.team = '${var.service.team}'
+      FACET entityId
+    EOT
   }
 
   critical {

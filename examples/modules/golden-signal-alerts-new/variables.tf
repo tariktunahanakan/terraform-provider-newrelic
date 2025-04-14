@@ -2,6 +2,7 @@ variable "service" {
   description = "The service to create alerts for"
   type = object({
     name                       = string
+    team                       = string
     threshold_duration         = number
     cpu_threshold              = number
     response_time_threshold    = number

@@ -23,6 +23,12 @@ variable "custom_nrql_conditions" {
   }))
   default = []
 }
+
+variable "app_names" {
+  description = "List of app names for alerts"
+  type        = list(string)
+}
+
 variable "notification_channel_ids" {
   description = "The IDs of notification channels to add to this policy"
   type        = list(string)

@@ -31,11 +31,10 @@ resource "newrelic_nrql_alert_condition" "response_time_web" {
   fill_value  = 0
 
   nrql {
-    # Değiştirildi: label.team yerine "appName = ..."
     query = <<-EOT
       SELECT filter(average(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
       FROM Metric
-      WHERE appName = '${var.service.name}'
+      WHERE appName IN (${join(", ", var.app_names)})
       AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
       FACET appName
     EOT
@@ -59,7 +58,7 @@ resource "newrelic_nrql_alert_condition" "throughput_web" {
     query = <<-EOT
       SELECT filter(count(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
       FROM Metric
-      WHERE appName = '${var.service.name}'
+      WHERE appName IN (${join(", ", var.app_names)})
       AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
       FACET appName
     EOT
@@ -84,7 +83,7 @@ resource "newrelic_nrql_alert_condition" "error_percentage" {
       SELECT ((filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all')
             / filter(count(newrelic.timeslice.value), WHERE metricTimesliceName IN ('HttpDispatcher', 'OtherTransaction/all'))) OR 0) * 100
       FROM Metric
-      WHERE appName = '${var.service.name}'
+      WHERE appName IN (${join(", ", var.app_names)})
       AND metricTimesliceName IN ('Errors/all', 'HttpDispatcher', 'OtherTransaction/all', 'Agent/MetricsReported/count')
       FACET appName
     EOT
@@ -108,7 +107,7 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
     query = <<-EOT
       SELECT average(cpuPercent)
       FROM SystemSample
-      WHERE appName = '${var.service.name}'
+      WHERE appName IN (${join(", ", var.app_names)})
       FACET entityId
     EOT
   }
@@ -135,6 +134,7 @@ resource "newrelic_workflow" "golden_signal_workflow" {
       values    = [newrelic_alert_policy.golden_signal_policy.id]
     }
   }
+
   dynamic "destination" {
     for_each = var.notification_channel_ids
     content {

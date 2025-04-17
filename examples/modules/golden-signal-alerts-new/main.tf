@@ -1,27 +1,11 @@
-resource "newrelic_alert_policy" "golden_signal_policy" {
-  name = "Golden Signals - ${var.service.name}"
+data "newrelic_entity" "application" {
+  name   = var.service.name
+  type   = "APPLICATION"
+  domain = "APM"
 }
 
-resource "newrelic_nrql_alert_condition" "custom_conditions" {
-  for_each = { for idx, cond in var.custom_nrql_conditions : idx => cond }
-
-  policy_id = newrelic_alert_policy.golden_signal_policy.id
-  name      = each.value.name
-  enabled   = true
-
-  nrql {
-    query = each.value.query
-  }
-
-  critical {
-    threshold             = each.value.threshold
-    operator              = each.value.operator
-    threshold_duration    = each.value.duration
-    threshold_occurrences = "all"
-  }
-
-  type                         = "static"
-  violation_time_limit_seconds = 259200
+resource "newrelic_alert_policy" "golden_signal_policy" {
+  name = "Golden Signals - ${var.service.name}"
 }
 
 resource "newrelic_nrql_alert_condition" "response_time_web" {
@@ -31,13 +15,7 @@ resource "newrelic_nrql_alert_condition" "response_time_web" {
   fill_value  = 0
 
   nrql {
-    query = <<-EOT
-      SELECT filter(average(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
-      FROM Metric
-      WHERE appName IN (${join(", ", var.app_names)})
-      AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
-      FACET appName
-    EOT
+    query = "SELECT filter(average(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0 FROM Metric WHERE appId IN (${data.newrelic_entity.application.application_id}) AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count') FACET appId"
   }
 
   critical {
@@ -55,13 +33,7 @@ resource "newrelic_nrql_alert_condition" "throughput_web" {
   fill_value  = 0
 
   nrql {
-    query = <<-EOT
-      SELECT filter(count(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0
-      FROM Metric
-      WHERE appName IN (${join(", ", var.app_names)})
-      AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count')
-      FACET appName
-    EOT
+    query = "SELECT filter(count(newrelic.timeslice.value), WHERE metricTimesliceName = 'HttpDispatcher') OR 0 FROM Metric WHERE appId IN (${data.newrelic_entity.application.application_id}) AND metricTimesliceName IN ('HttpDispatcher', 'Agent/MetricsReported/count') FACET appId"
   }
 
   critical {
@@ -79,14 +51,7 @@ resource "newrelic_nrql_alert_condition" "error_percentage" {
   fill_value  = 0
 
   nrql {
-    query = <<-EOT
-      SELECT ((filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all')
-            / filter(count(newrelic.timeslice.value), WHERE metricTimesliceName IN ('HttpDispatcher', 'OtherTransaction/all'))) OR 0) * 100
-      FROM Metric
-      WHERE appName IN (${join(", ", var.app_names)})
-      AND metricTimesliceName IN ('Errors/all', 'HttpDispatcher', 'OtherTransaction/all', 'Agent/MetricsReported/count')
-      FACET appName
-    EOT
+    query = "SELECT ((filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all') / filter(count(newrelic.timeslice.value), WHERE metricTimesliceName IN ('HttpDispatcher', 'OtherTransaction/all'))) OR 0) * 100 FROM Metric WHERE appId IN (${data.newrelic_entity.application.application_id}) AND metricTimesliceName IN ('Errors/all', 'HttpDispatcher', 'OtherTransaction/all', 'Agent/MetricsReported/count') FACET appId"
   }
 
   critical {
@@ -104,12 +69,7 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
   fill_value  = 0
 
   nrql {
-    query = <<-EOT
-      SELECT average(cpuPercent)
-      FROM SystemSample
-      WHERE appName IN (${join(", ", var.app_names)})
-      FACET entityId
-    EOT
+    query = "SELECT average(cpuPercent) FROM SystemSample WHERE (`applicationId` = '${data.newrelic_entity.application.application_id}') FACET entityId"
   }
 
   critical {
@@ -134,7 +94,6 @@ resource "newrelic_workflow" "golden_signal_workflow" {
       values    = [newrelic_alert_policy.golden_signal_policy.id]
     }
   }
-
   dynamic "destination" {
     for_each = var.notification_channel_ids
     content {

@@ -80,18 +80,6 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
   }
 }
 
-resource "newrelic_notification_channel" "slack_notification_channel" {
-  name           = "Slack Notification Channel"
-  type           = "WEBHOOK"  # Slack için Webhook tipi kullanıyoruz
-  destination_id = data.newrelic_notification_destination.slack_destination.id
-  product        = "IINT"
-
-  property {
-    key   = "url"
-    value = local.slack_webhook_url  # Slack Webhook URL'si
-  }
-}
-
 resource "newrelic_workflow" "golden_signal_workflow" {
   name                  = "Golden Signals Workflow ${var.service.name}"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
@@ -109,7 +97,7 @@ resource "newrelic_workflow" "golden_signal_workflow" {
   dynamic "destination" {
     for_each = var.notification_channel_ids
     content {
-      channel_id = destination.value  # Slack kanal ID'si burada kullanılıyor
+      channel_id = destination.value
     }
   }
 }

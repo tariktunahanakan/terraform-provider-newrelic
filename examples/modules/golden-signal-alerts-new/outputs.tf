@@ -17,7 +17,3 @@ output "error_percentage_condition_id" {
 output "cpu_condition_id" {
   value = newrelic_nrql_alert_condition.high_cpu.id
 }
-
-output "slack_notification_channel_id" {
-  value = newrelic_notification_channel.slack_notification_channel.id
-}

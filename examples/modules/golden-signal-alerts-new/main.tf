@@ -10,7 +10,7 @@ resource "newrelic_alert_policy" "golden_signal_policy" {
 
 resource "newrelic_nrql_alert_condition" "response_time_web" {
   policy_id   = newrelic_alert_policy.golden_signal_policy.id
-  name        = "High Response Time (web)"
+  name        = "Golden Alerts High Response Time (web)"
   fill_option = "static"
   fill_value  = 0
 
@@ -28,7 +28,7 @@ resource "newrelic_nrql_alert_condition" "response_time_web" {
 
 resource "newrelic_nrql_alert_condition" "throughput_web" {
   policy_id   = newrelic_alert_policy.golden_signal_policy.id
-  name        = "Low Throughput (web)"
+  name        = "Golden Alerts Low Throughput (web)"
   fill_option = "static"
   fill_value  = 0
 
@@ -46,7 +46,7 @@ resource "newrelic_nrql_alert_condition" "throughput_web" {
 
 resource "newrelic_nrql_alert_condition" "error_percentage" {
   policy_id   = newrelic_alert_policy.golden_signal_policy.id
-  name        = "High Error Percentage"
+  name        = "Golden Alerts High Error Percentage"
   fill_option = "static"
   fill_value  = 0
 
@@ -64,7 +64,7 @@ resource "newrelic_nrql_alert_condition" "error_percentage" {
 
 resource "newrelic_nrql_alert_condition" "high_cpu" {
   policy_id   = newrelic_alert_policy.golden_signal_policy.id
-  name        = "High CPU usage"
+  name        = "Golden Alerts High CPU usage"
   fill_option = "static"
   fill_value  = 0
 

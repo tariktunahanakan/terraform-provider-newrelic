@@ -98,7 +98,6 @@ resource "newrelic_workflow" "golden_signal_workflow" {
     for_each = var.notification_channel_ids
     content {
       channel_id = destination.value
-      type       = "SLACK" 
     }
   }
 }

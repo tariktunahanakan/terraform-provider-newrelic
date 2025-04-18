@@ -14,3 +14,8 @@ variable "notification_channel_ids" {
   description = "The IDs of notification channels to add to this policy"
   type        = list(string)
 }
+
+variable "slack_webhook_url" {
+  description = "Slack webhook URL for alerts"
+  type        = string
+}

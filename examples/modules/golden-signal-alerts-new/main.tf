@@ -80,24 +80,6 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
   }
 }
 
-data "newrelic_notification_destination" "webhook_destination" {
-  name = "Golden Signal Webhook Testing"
-}
-
-# Resource
-resource "newrelic_notification_channel" "webhook_notification_channel" {
-  name           = "slack-example"
-  type           = "SLACK"
-  destination_id = data.newrelic_notification_destination.webhook_destination.id
-  product        = "IINT"
-
-  property {
-    key   = "channel"
-    value = "#prod-alerts"
-  }
-}
-
-
 resource "newrelic_workflow" "golden_signal_workflow" {
   name                  = "Golden Signals Workflow ${var.service.name}"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"

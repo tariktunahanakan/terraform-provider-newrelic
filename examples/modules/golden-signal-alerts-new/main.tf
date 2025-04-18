@@ -80,6 +80,18 @@ resource "newrelic_nrql_alert_condition" "high_cpu" {
   }
 }
 
+# Slack notification channel
+resource "newrelic_alert_channel" "slack_notification" {
+  name = "slack-prod-alerts"
+  type = "slack"
+ 
+  config {
+    # Use the URL provided in your New Relic Slack integration
+    url     = "https://hooks.slack.com/services/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"
+    channel = "prod-alerts"
+  }
+}
+
 resource "newrelic_workflow" "golden_signal_workflow" {
   name                  = "Golden Signals Workflow ${var.service.name}"
   muting_rules_handling = "NOTIFY_ALL_ISSUES"
